@@ -122,6 +122,33 @@ result$dic
 
 
 #
+# . Qi version, interval ----
+#
+
+set.seed(11)
+sim <- lc_simulate(n = 30)
+
+sim$data$y_up <- sim$data$y
+sim$data$y_up[sim$data$uncensored == 0] <- sim$data$threshold[sim$data$uncensored == 0]
+sim$data$y_lo <- sim$data$y
+sim$data$y_lo[sim$data$uncensored == 0] <- 0
+sim$data
+
+# debugonce(int_linear_qi)
+result <- int_linear_qi(sim$data)
+
+# Get best estimates and plot its regression line on top of the plot  
+a <- result$intercept["50%"]
+b <- result$slope["50%"]
+abline(a, b, col = "green4")
+# Add confidence interval  
+lines(y_lo ~ x, data = result$plot_data, lty = "dashed", col = "green4")
+lines(y_hi ~ x, data = result$plot_data, lty = "dashed", col = "green4")
+
+# DIC
+result$dic
+
+#
 # LR with measurement error ----
 #
 # Slope is significantly biased downwards
