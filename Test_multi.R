@@ -436,12 +436,19 @@ stats <- summary$statistics
 
 # Some R code to simulate data from the above model
 n <- 100
+# Un-centered:
 alpha <- 20
+# Centered:
+# alpha <- 0
 beta <- 1
 sigma_lat <- 3
 # Set the seed so this is repeatable
 set.seed(123)
+# Un-centered:
 x <- sort(runif(n, 0, 10)) # Sort as it makes the plotted lines neater
+# Centered:
+# x <- sort(runif(n, -5, 5)) # Sort as it makes the plotted lines neater
+
 y_latent <- rnorm(n, mean = alpha + beta * x, sd = sigma_lat)
 
 # Add components  
