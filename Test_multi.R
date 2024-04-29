@@ -292,7 +292,7 @@ model_parameters <- c("A", "B", "Sigma")
 
 # Run the model
 # Change to 'runjags' - original was with R2jags 
-runjags <- runjags::run.jags(
+model_run <- runjags::run.jags(
   data = model_data,
   monitor = model_parameters,
   model = model_code
@@ -436,17 +436,13 @@ stats <- summary$statistics
 
 # Some R code to simulate data from the above model
 n <- 100
-alpha <- 2
-beta <- 3
+alpha <- 20
+beta <- 1
 sigma_lat <- 3
 # Set the seed so this is repeatable
 set.seed(123)
 x <- sort(runif(n, 0, 10)) # Sort as it makes the plotted lines neater
 y_latent <- rnorm(n, mean = alpha + beta * x, sd = sigma_lat)
-
-# Also create a plot
-plot(x, y_latent)
-lines(x, alpha + beta * x)
 
 # Add components  
 y <- matrix(nrow = n, ncol = 3)
@@ -455,6 +451,22 @@ sigma_comp <- c(3,2,1)
 for (i in 1:3){
   y[,i] <- rnorm(n, mean = y_latent*p_comp[i], sd = sigma_comp[i])
 }
+
+# Data frame of true parameter values    
+true_df <- data.frame(
+  true = c(alpha, beta, sigma_lat,
+           sigma_comp, p_comp))
+
+
+# Also create a plot
+ylim <- c(0,35)
+par(mfrow = c(3,2), mar = c(3,4,2,1))
+plot(x, y_latent, ylim = ylim, main = "latent (unobserved)")
+lines(x, alpha + beta * x)
+for (i in 1:3){
+  plot(x, y[,i], ylim = ylim, main = paste("component", i))
+}
+plot(x, apply(y, 1, sum), ylim = ylim, main = "sum of components")
 
 pairs(data.frame(
   y = y,
@@ -516,5 +528,23 @@ model_mcmc <- coda::as.mcmc(model_run)
 summary <- summary(model_mcmc)
 quants <- summary$quantiles
 stats <- summary$statistics
+quants_df <- bind_cols(
+  data.frame(parameter = rownames(quants)),
+  as.data.frame(quants),
+  true_df
+)
+stats_df <- bind_cols(
+  data.frame(parameter = rownames(stats)),
+  as.data.frame(stats),
+  true_df
+)
+
+# Plot estimates (black) and true values (red)  
+ggplot(quants_df %>% filter(parameter != "alpha"), aes(parameter, `50%`)) +
+  geom_pointrange(aes(ymin = `2.5%`, ymax = `97.5%`)) +
+  geom_point(aes(y = true), color = "red", shape = 1, size = 3) +
+  coord_flip() +
+  ylab("Estimates (black) and true values (red)")
+  
 
 
