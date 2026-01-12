@@ -667,6 +667,21 @@ test <- lc_fixedsplines_tp(data = data_test_prep,
 
 data_all <-  readRDS("../../seksjon 212/Milkys2_pc/Files_from_Jupyterhub_2021/Raw_data/109_adjusted_data_2022-09-23.rds")
 
+data_all %>%
+  filter(PARAM == "HG" & TISSUE_NAME %in% "Muskel" & MYEAR == 2021) %>%
+  count(STATION_CODE, VALUE_WWa_lacking = is.na(VALUE_WWa)) %>% View("2021")
+
+data_all %>%
+  filter(PARAM == "HG" & TISSUE_NAME %in% "Muskel") %>%
+  group_by(STATION_CODE, VALUE_WWa_lacking = is.na(VALUE_WWa)) %>%
+  summarize(n = length(unique(MYEAR))) %>%
+  View("")
+
+data_all %>%
+  filter(PARAM == "HG" & TISSUE_NAME %in% "Muskel") %>%
+  distinct(STATION_CODE, MYEAR, VALUE_WWa_lacking = is.na(VALUE_WWa)) %>%
+  count(STATION_CODE, VALUE_WWa_lacking) %>% View()
+
 data_test_orig <- data_all %>%
   filter(STATION_CODE == "36B" & PARAM == "HG" & TISSUE_NAME %in% "Muskel")
 
@@ -689,7 +704,7 @@ data_test_prep$meas_error <- exp(0.2) - 1
 
 table(data_test_prep$uncensored)
 
-# Delete the 2 under LOQ
+# Delete the 2 values under LOQ
 data_test_prep2 <- data_test_prep %>%
   filter(uncensored == 1)
 
@@ -1443,61 +1458,61 @@ log(mc2d::dbern(1, prob))
 #
 #o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
 
-The jagam reults differ only for k = 3, not k = 4
-
-Results of jagam for 
-y_comb ~ s(x, bs = "tp", k = 3)
+# The jagam reults differ only for k = 3, not k = 4
+# 
+# Results of jagam for 
+# y_comb ~ s(x, bs = "tp", k = 3)
 
 #
 #  mgcv_1.8-38 (Windows)
 #
 
-model {                                                        
-  mu <- X %*% b ## expected response                           
-  for (i in 1:n) { y[i] ~ dnorm(mu[i],tau) } ## response      
-  scale <- 1/tau ## convert tau to standard GLM scale          
-  tau ~ dgamma(.05,.005) ## precision parameter prior          
-  ## Parametric effect priors CHECK tau=1/21^2 is appropriate!
-  for (i in 1:1) { b[i] ~ dnorm(0,0.0022) }                    
-  ## prior for s(x)...                                         
-  K1 <- S1[1:2,1:2] * lambda[1]  + S1[1:2,3:4] * lambda[2]    
-  b[2:3] ~ dmnorm(zero[2:3],K1)                                
-  ## smoothing parameter priors CHECK...                       
-  for (i in 1:2) {                                            
-    lambda[i] ~ dgamma(.05,.005)                               
-    rho[i] <- log(lambda[i])                                   
-  }                                                           
-}  
+# model {                                                        
+#   mu <- X %*% b ## expected response                           
+#   for (i in 1:n) { y[i] ~ dnorm(mu[i],tau) } ## response      
+#   scale <- 1/tau ## convert tau to standard GLM scale          
+#   tau ~ dgamma(.05,.005) ## precision parameter prior          
+#   ## Parametric effect priors CHECK tau=1/21^2 is appropriate!
+#   for (i in 1:1) { b[i] ~ dnorm(0,0.0022) }                    
+#   ## prior for s(x)...                                         
+#   K1 <- S1[1:2,1:2] * lambda[1]  + S1[1:2,3:4] * lambda[2]    
+#   b[2:3] ~ dmnorm(zero[2:3],K1)                                
+#   ## smoothing parameter priors CHECK...                       
+#   for (i in 1:2) {                                            
+#     lambda[i] ~ dgamma(.05,.005)                               
+#     rho[i] <- log(lambda[i])                                   
+#   }                                                           
+# }  
 
-Data:
-  List of 5
-$ y   : num [1:316(1d)] 0.262 -0.844 0.916 -0.713 -1.309 ...
-$ n   : int 316
-$ X   : num [1:316, 1:3] 1 1 1 1 1 1 1 1 1 1 ...
-..- attr(*, "dimnames")=List of 2
-$ S1  : num [1:2, 1:4] 1.73e+01 1.01e-13 1.01e-13 5.85e-28 0.00 ...
-$ zero: num [1:3] 0 0 0
+# Data:
+#   List of 5
+# $ y   : num [1:316(1d)] 0.262 -0.844 0.916 -0.713 -1.309 ...
+# $ n   : int 316
+# $ X   : num [1:316, 1:3] 1 1 1 1 1 1 1 1 1 1 ...
+# ..- attr(*, "dimnames")=List of 2
+# $ S1  : num [1:2, 1:4] 1.73e+01 1.01e-13 1.01e-13 5.85e-28 0.00 ...
+# $ zero: num [1:3] 0 0 0
 
 
 #
 #  mgcv_1.8-39 (Linux)
 #
 
-model {                                                        
-  mu <- X %*% b ## expected response                          
-  for (i in 1:n) { y[i] ~ dnorm(mu[i],tau) } ## response       
-  scale <- 1/tau ## convert tau to standard GLM scale         
-  tau ~ dgamma(.05,.005) ## precision parameter prior          
-  ## Parametric effect priors CHECK tau=1/12^2 is appropriate!
-  for (i in 1:1) { b[i] ~ dnorm(0,0.0068) }                    
-  ## prior for s(x)...                                        
-  for (i in c(2)) { b[i] ~ dnorm(0, lambda[1]) }               
-  for (i in c(3)) { b[i] ~ dnorm(0, lambda[2]) }              
-  ## smoothing parameter priors CHECK...                       
-  for (i in 1:2) {                                            
-    lambda[i] ~ dgamma(.05,.005)                               
-    rho[i] <- log(lambda[i])                                  
-  }   
+# model {                                                        
+#   mu <- X %*% b ## expected response                          
+#   for (i in 1:n) { y[i] ~ dnorm(mu[i],tau) } ## response       
+#   scale <- 1/tau ## convert tau to standard GLM scale         
+#   tau ~ dgamma(.05,.005) ## precision parameter prior          
+#   ## Parametric effect priors CHECK tau=1/12^2 is appropriate!
+#   for (i in 1:1) { b[i] ~ dnorm(0,0.0068) }                    
+#   ## prior for s(x)...                                        
+#   for (i in c(2)) { b[i] ~ dnorm(0, lambda[1]) }               
+#   for (i in c(3)) { b[i] ~ dnorm(0, lambda[2]) }              
+#   ## smoothing parameter priors CHECK...                       
+#   for (i in 1:2) {                                            
+#     lambda[i] ~ dgamma(.05,.005)                               
+#     rho[i] <- log(lambda[i])                                  
+#   }   
   
   # Data: 
   #   List of 3
@@ -1506,4 +1521,28 @@ model {
   # $ X: num [1:80, 1:3] 1 1 1 1 1 1 1 1 1 1 ...
   
   
+#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
+#
+# Appendix 3: Rob's rule 2 using dplyr  ----
+#
+# https://dplyr.tidyverse.org/reference/cumall.html
+#
+#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o#o
+
+library(dplyr)
+
+test <- data.frame(
+  a = rep(1:2, each = 10),
+  i = rep(1:10, 2),
+  x = c(1,0,0,0,0,1,0,1,0,1,
+        0,1,1,0,0,0,1,0,1,0))
+
+test %>%
+  group_by(a) %>%
+  arrange(a, desc(i)) %>%
+  mutate(cummean = cummean(x)) %>%
+  arrange(a, i) %>%
+  mutate(Test2 = cumany(cummean >= 0.5))
+  
+
 
