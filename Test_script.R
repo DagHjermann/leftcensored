@@ -126,13 +126,19 @@ result$dic
 #
 
 set.seed(11)
-sim <- lc_simulate(n = 30)
+sim <- lc_simulate(n = 30, plot = FALSE)
 
 sim$data$y_up <- sim$data$y
 sim$data$y_up[sim$data$uncensored == 0] <- sim$data$threshold[sim$data$uncensored == 0]
 sim$data$y_lo <- sim$data$y
 sim$data$y_lo[sim$data$uncensored == 0] <- 0
 sim$data
+
+# plot
+plot(y_up~x, data = sim$data, ylim = range(sim$data$y_lo, sim$data$y_up), type = "n")
+segments(x0 = sim$data$x, y0 = sim$data$y_lo, y1 = sim$data$y_up)
+points(y_lo~x, data = sim$data, pch = 16)
+points(y_up~x, data = sim$data, pch = 16)
 
 # debugonce(int_linear_qi)
 result <- int_linear_qi(sim$data)
