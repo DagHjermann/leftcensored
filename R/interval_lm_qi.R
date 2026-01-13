@@ -1,5 +1,76 @@
-# Linear regression for interval-censored data. This version uses the method of Qi et al. (2022).
-
+#' Linear regression for interval-censored data
+#' 
+#' This function runs linear regression when the dependent (y) variable is left-censored. That is,
+#' for some or all measurements, we only know that the actual value is below some upper bound (y_up) 
+#' and above some lower bound (y_lo). The model does not take measurement error into account. The model
+#' formulation of Qi et al. (2022) is used.
+#' 
+#' @param data The data must have (at least) four columns: the predictor variable, the (uncensored) response variable, 
+#' a variable which is 1 for every uncensored observation, and a variable with the threhold of censoring for every censored observation
+#' @param x Variable name for the predictor (independent) variable        
+#' @param y_lo Variable name for the lower bound of the response (dependent) variable    
+#' @param y_up Variable name for the lower bound of the response (dependent) variable    
+#' @param uncensored Variable name for a variable which is 1 for uncensored values (for chemical measurements, above LOQ) 
+#' and 0 for censored values (for chemical measurements: less than LOQ, but above some other value). 
+#' values.     
+#' @param resolution The number of points along the x axis used to describe the spline. 
+#' @param n.chains The number of MCMC chains (replicates) to run. The default is 4. Using more than 1 chain enables us to say whether 
+#' @param n.iter The number of iterations for each MCMC chains. The default is 5000, which is usually sufficient for this application.
+#' @param n.burnin The number of iterations to remove at start of each MCMC chain, before results are collected for statistics. The default is 1000.
+#' If n.burnin is too small, plots of the trace (see examples) will show whether the chains are homogeneous along the chain (there should be from 
+#' no decreasing or increasing trend in the traceplot). One can also use R2jags::traceplot to assess whether the chains behave differently, 
+#' depending on their different starting point. If they do, n.burnin should be increased.
+#' @param n.thin The number of MCMC iterations that are kept for statistics
+#' 
+#' @keywords Statistics, regression, censored
+#' 
+#' @references 
+#' Qi X, Zhou S and Plummer M. 2022. On Bayesian modeling of censored data in JAGS. BMC Bioinformatics 23: 102
+#' (doi: 10.1186/s12859-021-04496-8). https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8944154/  
+#' 
+#' Plummer N (2017). JAGS Version 4.3.0 user manual. https://sourceforge.net/projects/mcmc-jags/files/  
+#' 
+#' @return The function returns a list with two parts: \code{summary} and \code{model}. \code{summary} shows a summary of the result, i.e., estimates
+#' of the parameters of the linear regression: intercept, slope and sigma (the estimated standard deviation of the data around the regression line).
+#' It is common to use the quantiles for parameter estimates, i.e., using the  
+#' 50% quantile as the "best estimate" of the parameters, and using the 2.5% and 97.5% quantiles as endpoints of a 95% confidence interval. 
+#' \code{model} is the output of the jags() command, which is what \code{lc_linear()} runs under the hood for estimation. 
+#' It is an MCMC object, which has methods for functions such as plot (see ?mcmc). If you have some knowledge of the MCMC technique for     
+#' state-space models, this can be used for diagnostic plots of the model. See examples.
+#'   
+#' @examples
+#' # Simulate data (using function made for left-censored data)
+#' set.seed(11)
+#' sim <- lc_simulate(n = 30, plot = FALSE)
+#' 
+#' # The upper bound is equal to 'y_plot' 
+#' sim$data$y_up <- sim$data$y_plot
+#' # Initially, we set lower bound to the same
+#' sim$data$y_lo <- sim$data$y_up
+#' # For censored data, let us say that the lower bound is 2 less than 
+#' # the upper bound:  
+#' sel <- sim$data$uncensored == 0
+#' sim$data$y_lo[sel] <- sim$data$y_up[sel] + log(0.1)
+#' 
+#' # Plot data
+#' plot(y_up~x, data = sim$data, ylim = range(sim$data$y_lo, sim$data$y_up), type = "n")
+#' segments(x0 = sim$data$x, y0 = sim$data$y_lo, y1 = sim$data$y_up)
+#' points(y_lo~x, data = sim$data, pch = 16)
+#' points(y_up~x, data = sim$data, pch = 16)
+#' result <- lc_linear(sim$data)
+#' 
+#' Estimate regression parameters:
+#' result <- int_linear_qi(sim$data
+#' 
+#' # Get best estimates and plot its regression line on top of the plot 
+#' a <- result$intercept["50%"]
+#' b <- result$slope["50%"]
+#' abline(a, b, col = "green4")
+#' Add confidence interval  
+#' lines(y_lo ~ x, data = result$plot_data, lty = "dashed", col = "green4")
+#' lines(y_hi ~ x, data = result$plot_data, lty = "dashed", col = "green4")
+#' 
+#' @export
 int_linear_qi <- function(data,
                           x = "x", 
                           y_lo = "y_lo", 
