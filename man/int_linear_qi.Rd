@@ -86,13 +86,13 @@ points(y_lo~x, data = sim$data, pch = 16)
 points(y_up~x, data = sim$data, pch = 16)
 
 # Estimate regression parameters:
-result <- int_linear_qi(sim$data
+result <- int_linear_qi(sim$data)
 
 # Get best estimates and plot its regression line on top of the plot 
 a <- result$intercept["50\%"]
 b <- result$slope["50\%"]
 abline(a, b, col = "green4")
-Add confidence interval  
+# Add confidence interval  
 lines(y_lo ~ x, data = result$plot_data, lty = "dashed", col = "green4")
 lines(y_hi ~ x, data = result$plot_data, lty = "dashed", col = "green4")
 
